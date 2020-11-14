@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
 import copy
@@ -55,11 +55,21 @@ def iic_read(mode, slave_addr, wr, reg_addr):
     time.sleep(0.01)                                                          # delay 10ns then to read data
     return cmd_interpret.read_status_reg(0) & 0xff
 #---------------------------------------------------------------------------------------------#
+## Bit error record
+# @param channel: 0-6 represents Rx channel 0-6, 7 represents Tx channel
+# @return: channel bit error record number
+#---------------------------------------------------------------------------------------------#
 def main():
     Slave_Addr = 0x23 
+
+    # Rx channel 1 settings
+    GBCR2_Reg1.set_CH1_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH1_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH1_CTLE_HFSR(7)
+
     iic_write_val = GBCR2_Reg1.get_config_vector()
+
     print(iic_write_val)
-    
     ## write data into I2C register one by one
     for i in range(len(iic_write_val)):
         iic_write(1, Slave_Addr, 0, i, iic_write_val[i])
@@ -69,7 +79,11 @@ def main():
     for i in range(len(iic_write_val)):
         iic_read_val += [iic_read(0, Slave_Addr, 1, i)]
     print(iic_read_val)
-
+    
+    if iic_read_val == iic_write_val:
+        print("Wrote into data matches with read back data!")
+    else:
+        print("Wrote into data doesn't match with read back data!")
     print("Ok!")
 #------------------------------------------------------------------------------------------------#
 if __name__ == '__main__':
