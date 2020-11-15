@@ -366,19 +366,19 @@ PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst0(
 .clock(gt0_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt0_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx0_Error_bit_Count)
+.Error_bit_Count(Rx6_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst1(
 .clock(gt1_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt1_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx1_Error_bit_Count)
+.Error_bit_Count(Rx5_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst2(
 .clock(gt2_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt2_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx2_Error_bit_Count)
+.Error_bit_Count(Rx4_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst3(
 .clock(gt3_rxusrclk2_i),            // Data check clock
@@ -390,19 +390,19 @@ PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst4(
 .clock(gt4_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt4_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx4_Error_bit_Count)
+.Error_bit_Count(Rx2_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst5(
 .clock(gt5_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt5_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx5_Error_bit_Count)
+.Error_bit_Count(Rx1_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst6(
 .clock(gt6_rxusrclk2_i),            // Data check clock
 .reset(reset),
 .DataIn(gt6_rxdata_i),              // 32-bit data
-.Error_bit_Count(Rx6_Error_bit_Count)
+.Error_bit_Count(Rx0_Error_bit_Count)
 );
 //---------------------------------------------------------< PRBS31_Data_Checker
 //---------------------------------------------------------> Rx Bit_error readout
@@ -420,7 +420,7 @@ begin
         3'b011 : Channel_Bit_Error_Output_reg = Rx3_Error_bit_Count;
         3'b100 : Channel_Bit_Error_Output_reg = Rx4_Error_bit_Count;
         3'b101 : Channel_Bit_Error_Output_reg = Rx5_Error_bit_Count;
-        3'b011 : Channel_Bit_Error_Output_reg = Rx6_Error_bit_Count;
+        3'b110 : Channel_Bit_Error_Output_reg = Rx6_Error_bit_Count;
         default: Channel_Bit_Error_Output_reg = Rx0_Error_bit_Count;
     endcase
 end
