@@ -13,5 +13,5 @@
   ![I2C interface Mapping](https://github.com/weizhangccnu/Python_Script/blob/master/ETROC1_TDC_Test_Software/Img/I2C_Interface_Mapping.png)
   - Seven GT (gigabit transceiver) are used to sent PRBS31 signal for each uplink channel and receive uplink channel output signal. The seven GT are wired to the PCI Express x8 endpoint edge connector (P1) fingers. We used a PCIe extension board to convert the edge fingers to SMA connectors that are easy to connect with GBCR2 test board.
 #### 2. **Firmware design**
-  * The firmware of GBCR2 SEU/SEE test is composed by uplink channel data checker module, downlink channel data checker module, I2C module, control_interface module, and ethernet module.
+  * The firmware for GBCR2 SEU/SEE test is composed by uplink channel data checker module, downlink channel data checker module, I2C module, control_interface module, and ethernet module.
 ### GBCR2 SEE/SEU test software
