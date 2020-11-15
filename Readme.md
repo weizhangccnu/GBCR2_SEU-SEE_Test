@@ -5,6 +5,8 @@
 
 ### GBCR2 SEE/SEU test firmware 
 #### 1.**Hardware platform**
-  - The Xilinx KC705 EVB was chose as a controller that generates PRBS31 signal, sends the signal for each uplink and downlink channel, receives GBCR2 output signals, and finally reocrd received signal bit error number.
+  - The Xilinx KC705 EVB was chose as a controller that generates PRBS31 signal, sends the signal for each uplink and downlink channel, receives GBCR2 output signals, and finally reocrds received signal bit error number.
+  - The KC705 EVB picture is shown as below:
+  ![KC705 EVB Picture](https://github.com/weizhangccnu/Python_Script/blob/master/ETROC1_TDC_Test_Software/I    mg/KC705_EVB.png)
 
 ### GBCR2 SEE/SEU test software
