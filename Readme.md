@@ -11,5 +11,5 @@
   - The PC was connected with KC705 EVB through 1000M ethernet cable and can read each channel bit error number. The IP address of KC705 is `192.168.2.x`, the x is configurable via switch (DIP switch SW11 positions 1 and 2 control the value of x)
   - An I2C master is implemented into the FPGA (on KC705 EVB) to configure GBCR2 chip. The I2C interface (on connector **J46** at KC705 EVB) mapping is shown in below figure:
   ![I2C interface Mapping](https://github.com/weizhangccnu/Python_Script/blob/master/ETROC1_TDC_Test_Software/Img/I2C_Interface_Mapping.png)
-  - Seven GT (gigabit transceiver) are used to sent PRBS31 signal for each uplink channel and receive uplink channel output signal. The seven GT are wired to the PCI Express x8 endpoint edge connector (P1) fingers. We used a PCIe extension board to convert the edge fingers to SMA connectors 
+  - Seven GT (gigabit transceiver) are used to sent PRBS31 signal for each uplink channel and receive uplink channel output signal. The seven GT are wired to the PCI Express x8 endpoint edge connector (P1) fingers. We used a PCIe extension board to convert the edge fingers to SMA connectors that are easy to connect with GBCR2 test board.
 ### GBCR2 SEE/SEU test software
