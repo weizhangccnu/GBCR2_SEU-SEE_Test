@@ -4,6 +4,6 @@
   - During SEU/SEE test, we will test all the seven uplink channels and one downlink channel and record bit error number for each channel.
 
 ### GBCR2 SEE/SEU test firmware 
-#### 1.** Hardware platform**
+#### 1.**Hardware platform**
 
 ### 2. GBCR2 SEE/SEU test software
