@@ -58,6 +58,17 @@ def iic_read(mode, slave_addr, wr, reg_addr):
 ## Bit error record
 # @param channel: 0-6 represents Rx channel 0-6, 7 represents Tx channel
 # @return: channel bit error record number
+def Bit_error_record():
+    Bit_error_byte = []
+    for i in range(7):
+        time.sleep(0.5)
+        cmd_interpret.write_config_reg(0, 0x0007 & i)
+        for j in range(4):
+            Bit_error_byte += [cmd_interpret.read_status_reg(4-j)]
+    Channel_bit_error = []
+    for i in range(7):
+        Channel_bit_error += [Bit_error_byte[0+i*4]<<48 | Bit_error_byte[1+i*4]<<32 | Bit_error_byte[2+i*4]<<16 | Bit_error_byte[3+i*4]]
+    return Channel_bit_error
 #---------------------------------------------------------------------------------------------#
 def main():
     Slave_Addr = 0x23 
@@ -66,6 +77,36 @@ def main():
     GBCR2_Reg1.set_CH1_CML_AmplSel(7)
     GBCR2_Reg1.set_CH1_CTLE_MFSR(10)
     GBCR2_Reg1.set_CH1_CTLE_HFSR(7)
+
+    # Rx channel 2 settings
+    GBCR2_Reg1.set_CH2_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH2_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH2_CTLE_HFSR(7)
+
+    # Rx channel 3 settings
+    GBCR2_Reg1.set_CH3_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH3_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH3_CTLE_HFSR(7)
+
+    # Rx channel 4 settings
+    GBCR2_Reg1.set_CH4_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH4_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH4_CTLE_HFSR(7)
+
+    # Rx channel 5 settings
+    GBCR2_Reg1.set_CH5_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH5_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH5_CTLE_HFSR(7)
+
+    # Rx channel 6 settings
+    GBCR2_Reg1.set_CH6_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH6_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH6_CTLE_HFSR(7)
+
+    # Rx channel 7 settings
+    GBCR2_Reg1.set_CH7_CML_AmplSel(7)
+    GBCR2_Reg1.set_CH7_CTLE_MFSR(10)
+    GBCR2_Reg1.set_CH7_CTLE_HFSR(7)
 
     iic_write_val = GBCR2_Reg1.get_config_vector()
 
@@ -84,6 +125,16 @@ def main():
         print("Wrote into data matches with read back data!")
     else:
         print("Wrote into data doesn't match with read back data!")
+
+    ## channel bit error write into file
+    today = datetime.date.today()
+    print(today)
+    with open("GBCR2_bit_error_%s.txt"%(today), 'a') as infile:
+        time_stampe = time.strftime('%m-%d_%H-%M-%S',time.localtime(time.time())) 
+        Channel_bit_error = []
+        Channel_bit_error = Bit_error_record()
+        print(Channel_bit_error)
+
     print("Ok!")
 #------------------------------------------------------------------------------------------------#
 if __name__ == '__main__':
