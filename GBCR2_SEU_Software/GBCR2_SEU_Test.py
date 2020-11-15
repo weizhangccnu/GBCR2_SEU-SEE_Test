@@ -125,10 +125,16 @@ def main():
         print("Wrote into data matches with read back data!")
     else:
         print("Wrote into data doesn't match with read back data!")
-    
-    Channel_bit_error = []
-    Channel_bit_error = Bit_error_record()
-    print(Channel_bit_error)
+
+    ## channel bit error write into file
+    today = datetime.date.today()
+    print(today)
+    with open("GBCR2_bit_error_%s.txt"%(today), 'a') as infile:
+        time_stampe = time.strftime('%m-%d_%H-%M-%S',time.localtime(time.time())) 
+        Channel_bit_error = []
+        Channel_bit_error = Bit_error_record()
+        print(Channel_bit_error)
+
     print("Ok!")
 #------------------------------------------------------------------------------------------------#
 if __name__ == '__main__':
