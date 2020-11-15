@@ -3,7 +3,7 @@
   - This repo is used to management GBCR2 SEU/SEE test firmware and software. we will detailed introduce firmware and software structure in below sections 
   - During SEU/SEE test, we will test all the seven uplink channels and one downlink channel and record bit error number for each channel.
 
-### 1. GBCR2 SEE/SEU test firmware 
-  * **Hardware platform**
+### GBCR2 SEE/SEU test firmware 
+#### 1.** Hardware platform**
 
 ### 2. GBCR2 SEE/SEU test software
