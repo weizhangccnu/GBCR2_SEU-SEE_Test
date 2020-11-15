@@ -21,17 +21,35 @@
 
 module GBCR2_SEU_Test(
 //---------------------< system clock and reset
-input SYS_RST,              //system reset
-input SYS_CLK_P,            //system clock 200MHz
-input SYS_CLK_N,
-//---------------------< GTX fro Rx
-input Q0_CLK1_GTREFCLK_PAD_N_IN,
-input Q0_CLK1_GTREFCLK_PAD_P_IN,
-input [6:0] RXN_IN,
-input [6:0] RXP_IN,
-output [6:0] TXN_OUT,
-output [6:0] TXP_OUT
-//---------------------< Ethernet
+input wire SYS_RST,              //system reset
+input wire SYS_CLK_P,            //system clock 200MHz
+input wire SYS_CLK_N,
+input wire SGMIICLK_Q0_P,        //125MHz for GTP/GTH/GTX  for 1G Ethernet interface
+input wire SGMIICLK_Q0_N,
+//----------------------< LED        
+output wire [7:0] LED8Bit,        //clock output
+//----------------------< DIPSw4Bit
+input wire [3:0] DIPSw4Bit,
+//----------------------> Gigbit eth interface (RGMII)
+output wire PHY_RESET_N,
+output wire [3:0] RGMII_TXD,
+output wire RGMII_TX_CTL,
+output wire RGMII_TXC,
+input wire [3:0] RGMII_RXD,
+input wire RGMII_RX_CTL,
+input wire RGMII_RXC,
+inout wire MDIO,
+output wire MDC,
+//---------------------< GTX for Rx channel
+input wire Q0_CLK1_GTREFCLK_PAD_N_IN,
+input wire Q0_CLK1_GTREFCLK_PAD_P_IN,
+input wire [6:0] RXN_IN,
+input wire [6:0] RXP_IN,
+output wire [6:0] TXN_OUT,
+output wire [6:0] TXP_OUT,
+//---------------------< IIC interface
+inout wire SDA,
+output wire SCL
 );
 //---------------------------------------------------------< global_clock_reset
 wire reset;
@@ -55,6 +73,165 @@ global_clock_reset global_clock_reset_inst(
     .CLK_OUT5(clk_200MHz)
   );    
 //---------------------------------------------------------> global_clock_reset
+
+//---------------------------------------------------------< generate sgmii_i clock
+wire clk_sgmii_i;
+wire clk_sgmii;
+wire clk_125MHz;
+IBUFDS_GTE2 #(
+   .CLKCM_CFG("TRUE"),          // Refer to Transceiver User Guide
+   .CLKRCV_TRST("TRUE"),        // Refer to Transceiver User Guide
+   .CLKSWING_CFG(2'b11)         // Refer to Transceiver User Guide
+)
+IBUFDS_GTE2_inst (
+   .O(clk_sgmii_i),             // 1-bit output: Refer to Transceiver User Guide
+   .ODIV2("open"),              // 1-bit output: Refer to Transceiver User Guide
+   .CEB(1'b0),                  // 1-bit input: Refer to Transceiver User Guide
+   .I(SGMIICLK_Q0_P),           // 1-bit input: Refer to Transceiver User Guide
+   .IB(SGMIICLK_Q0_N)           // 1-bit input: Refer to Transceiver User Guide
+);
+
+BUFG BUFG_inst (
+   .O(clk_sgmii),               // 1-bit output: Clock output
+   .I(clk_sgmii_i)              // 1-bit input: Clock input
+);
+assign clk_125MHz = clk_sgmii;
+//---------------------------------------------------------> generate sgmii_i clock
+
+//---------------------------------------------------------< gig_eth 
+wire [47:0]gig_eth_mac_addr;
+wire [31:0]gig_eth_ipv4_addr;
+wire [31:0]gig_eth_subnet_mask;
+wire [31:0]gig_eth_gateway_ip_addr; 
+wire [7:0]gig_eth_tx_tdata;
+wire gig_eth_tx_tvalid;
+wire gig_eth_tx_tready;
+wire [7:0]gig_eth_rx_tdata;
+wire gig_eth_rx_tvalid;
+wire gig_eth_rx_tready;
+wire gig_eth_tcp_use_fifo;
+wire gig_eth_tx_fifo_wrclk;
+wire [31:0]gig_eth_tx_fifo_q;
+wire gig_eth_tx_fifo_wren;
+wire gig_eth_tx_fifo_full;
+wire gig_eth_rx_fifo_rdclk;
+wire [31:0]gig_eth_rx_fifo_q;
+wire gig_eth_rx_fifo_rden;
+wire gig_eth_rx_fifo_empty;
+
+assign gig_eth_mac_addr = {44'h000a3502a75,DIPSw4Bit[3:0]};
+assign gig_eth_ipv4_addr = {28'hc0a8020,DIPSw4Bit[3:0]};
+assign gig_eth_subnet_mask = 32'hffffff00;
+assign gig_eth_gateway_ip_addr = 32'hc0a80201;
+//assign gpio_high = 2'b11;
+gig_eth gig_eth_inst
+(
+// asynchronous reset
+   .GLBL_RST(reset),
+// clocks
+   .GTX_CLK(clk_125MHz),
+   .REF_CLK(sys_clk),                           // 200MHz for IODELAY
+// PHY interface
+   .PHY_RESETN(PHY_RESET_N),
+//         -- RGMII Interface
+   .RGMII_TXD(RGMII_TXD),
+   .RGMII_TX_CTL(RGMII_TX_CTL),
+   .RGMII_TXC(RGMII_TXC),
+   .RGMII_RXD(RGMII_RXD),
+   .RGMII_RX_CTL(RGMII_RX_CTL),
+   .RGMII_RXC(RGMII_RXC),
+// MDIO Interface
+   .MDIO(MDIO),
+   .MDC(MDC),
+// TCP
+   .MAC_ADDR(gig_eth_mac_addr),
+   .IPv4_ADDR(gig_eth_ipv4_addr),
+   .IPv6_ADDR(128'h0),
+   .SUBNET_MASK(gig_eth_subnet_mask),
+   .GATEWAY_IP_ADDR(gig_eth_gateway_ip_addr),
+   .TCP_CONNECTION_RESET(1'b0),
+   .TX_TDATA(gig_eth_tx_tdata),
+   .TX_TVALID(gig_eth_tx_tvalid),
+   .TX_TREADY(gig_eth_tx_tready),
+   .RX_TDATA(gig_eth_rx_tdata),
+   .RX_TVALID(gig_eth_rx_tvalid),
+   .RX_TREADY(gig_eth_rx_tready),
+//fifo8to32 and fifo32to8
+   .TCP_USE_FIFO(gig_eth_tcp_use_fifo),
+   .TX_FIFO_WRCLK(gig_eth_tx_fifo_wrclk),
+   .TX_FIFO_Q(gig_eth_tx_fifo_q),
+   .TX_FIFO_WREN(gig_eth_tx_fifo_wren),
+   .TX_FIFO_FULL(gig_eth_tx_fifo_full),
+   .RX_FIFO_RDCLK(gig_eth_rx_fifo_rdclk),
+   .RX_FIFO_Q(gig_eth_rx_fifo_q),
+   .RX_FIFO_RDEN(gig_eth_rx_fifo_rden),
+   .RX_FIFO_EMPTY(gig_eth_rx_fifo_empty)
+);
+assign gig_eth_tcp_use_fifo = 1'b1;
+assign gig_eth_rx_fifo_rdclk = control_clk;
+//---------------------------------------------------------> gig_eth
+//---------------------------------------------------------< control_interface
+wire control_clk;
+wire [35:0]control_fifo_q;
+wire control_fifo_empty;
+wire control_fifo_rdreq;
+wire control_fifo_rdclk;
+
+wire [35:0]cmd_fifo_q;
+wire cmd_fifo_empty;
+wire cmd_fifo_rdreq;
+
+wire [511:0]config_reg;
+wire [15:0]pulse_reg;
+wire [175:0]status_reg;
+
+wire control_mem_we;
+wire [31:0]control_mem_addr;
+wire [31:0]control_mem_din;
+
+wire idata_data_fifo_rdclk;
+wire idata_data_fifo_empty;
+wire idata_data_fifo_rden;
+wire [31:0]idata_data_fifo_dout;
+assign control_clk = clk_100MHz;
+
+control_interface  control_interface_inst(
+   .RESET(reset),
+   .CLK(control_clk),
+  // From FPGA to PC
+   .FIFO_Q(control_fifo_q),
+   .FIFO_EMPTY(control_fifo_empty),
+   .FIFO_RDREQ(control_fifo_rdreq),
+   .FIFO_RDCLK(control_fifo_rdclk),
+  // From PC to FPGA, FWFT
+   .CMD_FIFO_Q(cmd_fifo_q),
+   .CMD_FIFO_EMPTY(cmd_fifo_empty),
+   .CMD_FIFO_RDREQ(cmd_fifo_rdreq),
+  // Digital I/O
+   .CONFIG_REG(config_reg),
+   .PULSE_REG(pulse_reg),
+   .STATUS_REG(status_reg),
+  // Memory interface
+   .MEM_WE(control_mem_we),
+   .MEM_ADDR(control_mem_addr),
+   .MEM_DIN(control_mem_din),
+   .MEM_DOUT(),
+  // Data FIFO interface, FWFT
+   .DATA_FIFO_Q(idata_data_fifo_dout),
+   .DATA_FIFO_EMPTY(idata_data_fifo_empty),
+   .DATA_FIFO_RDREQ(idata_data_fifo_rden),
+   .DATA_FIFO_RDCLK(idata_data_fifo_rdclk)
+);
+assign cmd_fifo_q = gig_eth_rx_fifo_q;
+assign cmd_fifo_empty = gig_eth_rx_fifo_empty;
+assign gig_eth_rx_fifo_rden = cmd_fifo_rdreq;
+
+assign gig_eth_tx_fifo_wrclk = clk_125MHz;
+assign control_fifo_rdclk = gig_eth_tx_fifo_wrclk;
+assign gig_eth_tx_fifo_q = control_fifo_q[31:0];
+assign gig_eth_tx_fifo_wren = ~control_fifo_empty;
+assign control_fifo_rdreq = ~gig_eth_tx_fifo_full;
+//---------------------------------------------------------> control_interface
 
 //---------------------------------------------------------> GTX PCIe6
 wire [31:0] gt0_rxdata_i;
@@ -228,16 +405,41 @@ PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst6(
 .Error_bit_Count(Rx6_Error_bit_Count)
 );
 //---------------------------------------------------------< PRBS31_Data_Checker
-
+//---------------------------------------------------------> Rx Bit_error readout
+wire [2:0]channel_select;
+//reg [63:0] Channel_Bit_Error_Output;
+reg [63:0] Channel_Bit_Error_Output_reg;
+assign status_reg[79:16] = Channel_Bit_Error_Output_reg;
+assign channel_select = config_reg[2:0];
+always @(channel_select)
+begin
+    case(channel_select)
+        3'b000 : Channel_Bit_Error_Output_reg = Rx0_Error_bit_Count;
+        3'b001 : Channel_Bit_Error_Output_reg = Rx1_Error_bit_Count;
+        3'b010 : Channel_Bit_Error_Output_reg = Rx2_Error_bit_Count;
+        3'b011 : Channel_Bit_Error_Output_reg = Rx3_Error_bit_Count;
+        3'b100 : Channel_Bit_Error_Output_reg = Rx4_Error_bit_Count;
+        3'b101 : Channel_Bit_Error_Output_reg = Rx5_Error_bit_Count;
+        3'b011 : Channel_Bit_Error_Output_reg = Rx6_Error_bit_Count;
+        default: Channel_Bit_Error_Output_reg = Rx0_Error_bit_Count;
+    endcase
+end
+//---------------------------------------------------------> Rx Bit_error readout
 //---------------------------------------------------------> ila_debug
-wire [95:0] probe0 = {gt0_rxdata_i,Rx0_Error_bit_Count};
-wire [95:0] probe1 = {gt1_rxdata_i,Rx1_Error_bit_Count};
-wire [95:0] probe2 = {gt2_rxdata_i,Rx2_Error_bit_Count};
-wire [95:0] probe3 = {gt3_rxdata_i,Rx3_Error_bit_Count};
-wire [95:0] probe4 = {gt4_rxdata_i,Rx4_Error_bit_Count};
-wire [95:0] probe5 = {gt5_rxdata_i,Rx5_Error_bit_Count};
-wire [95:0] probe6 = {gt6_rxdata_i,Rx6_Error_bit_Count};
-
+wire [95:0] probe0;
+wire [95:0] probe1;
+wire [95:0] probe2;
+wire [95:0] probe3;
+wire [95:0] probe4;
+wire [95:0] probe5;
+wire [95:0] probe6;
+assign probe0 = {gt0_rxdata_i,Rx0_Error_bit_Count};
+assign probe1 = {gt1_rxdata_i,Rx1_Error_bit_Count};
+assign probe2 = {gt2_rxdata_i,Rx2_Error_bit_Count};
+assign probe3 = {gt3_rxdata_i,Rx3_Error_bit_Count};
+assign probe4 = {gt4_rxdata_i,Rx4_Error_bit_Count};
+assign probe5 = {gt5_rxdata_i,Rx5_Error_bit_Count};
+assign probe6 = {gt6_rxdata_i,Rx6_Error_bit_Count};
 ila_0 ila_0_inst (
 	.clk(gt0_rxusrclk2_i),     // input wire clk
 	.probe0(probe0), // input wire [95:0]  probe0  
@@ -246,7 +448,68 @@ ila_0 ila_0_inst (
 	.probe3(probe3), // input wire [95:0]  probe3 
 	.probe4(probe4), // input wire [95:0]  probe4 
 	.probe5(probe5), // input wire [95:0]  probe5 
-	.probe6(probe6) // input wire [95:0]  probe6
+	.probe6(probe6)  // input wire [95:0]  probe6
 );
 //---------------------------------------------------------< ila_debug
+
+//---------------------------------------------------------< IIC
+wire START;
+wire [1:0]MODE;
+wire SL_WR;
+wire [6:0]SL_ADDR;
+wire [7:0]WR_ADDR;
+wire [7:0]WR_DATA0;
+wire [7:0]WR_DATA1;
+wire [7:0]RD_DATA0;
+wire [7:0]RD_DATA1;
+wire SDA_OUT;
+wire SDA_IN;
+wire SDA_T;
+
+assign START = pulse_reg[0];
+assign MODE = config_reg[2*32+25:2*32+24];
+assign SL_ADDR = config_reg[2*32+23:2*32+17];
+assign SL_WR = config_reg[2*32+16];
+assign WR_ADDR = config_reg[2*32+15:2*32+8];
+assign WR_DATA0 = config_reg[2*32+7:2*32+0];
+assign status_reg[15:0] = {RD_DATA1,RD_DATA0};
+i2c_wr_bytes i2c_wr_bytes_inst(
+.CLK(clk_50MHz),                       //system clock 50Mhz
+.RESET(reset),                          //active high reset
+.START(START),                          //the rising edge trigger a start, generate by config_reg
+.MODE(MODE),                            //'0' is 1 bytes read or write, '1' is 2 bytes read or write,
+                                        //'2' is 3 bytes write only , don't set to '3'
+.SL_WR(SL_WR),                          //'0' is write, '1' is read
+.SL_ADDR(SL_ADDR),                      //slave addr
+.WR_ADDR(WR_ADDR),                      //chip internal addr for read and write
+.WR_DATA0(WR_DATA0),                    //first byte data for write
+.WR_DATA1(WR_DATA1),                    //second byte data for write
+.RD_DATA0(RD_DATA0),                    //first byte readout
+.RD_DATA1(1),                    //second byte readout
+.BUSY("open"),                          //indicates transaction in progress
+.SDA_in(SDA),                           //serial data input of i2c bus
+.SDA_out(SDA_OUT),                      //serial data output of i2c bus
+.SDA_T(SDA_T),                          //serial data direction of i2c bus
+.SCL(SCL)                               //serial clock output of i2c bus
+);
+assign SDA = SDA_T ? 1'bz : SDA_OUT;
+//---------------------------------------------------------> IIC
+
+//---------------------------------------------------------< VIO 
+wire [255:0] probe_in0;
+wire [255:0] probe_in1;
+wire [63:0] probe_in2;
+wire [2:0] probe_out0;
+assign probe_in0 = config_reg[255:0];
+assign probe_in1 = config_reg[511:256];
+assign probe_in2 = status_reg[79:16];
+assign probe_out0 = 3'b000;
+vio_0 vio_0_inst (
+  .clk(clk_50MHz),                // input wire clk
+  .probe_in0(probe_in0),    // input wire [255 : 0] probe_in0
+  .probe_in1(probe_in1),    // input wire [255 : 0] probe_in1
+  .probe_in2(probe_in2),    // input wire [63 : 0] probe_in2
+  .probe_out0(probe_out0)   // output wire [2 : 0] probe_out0
+);
+//---------------------------------------------------------> VIO 
 endmodule
