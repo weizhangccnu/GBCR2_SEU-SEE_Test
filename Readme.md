@@ -14,5 +14,8 @@
   - Seven GT (gigabit transceiver) are used to sent PRBS31 signal for each uplink channel and receive uplink channel output signal. The seven GT are wired to the PCI Express x8 endpoint edge connector (P1) fingers. We used a PCIe extension board to convert the edge fingers to SMA connectors that are easy to connect with GBCR2 test board.
 #### 2. **Firmware design**
   * The firmware for GBCR2 SEU/SEE test is composed by uplink channel data checker module, downlink channel data checker module, I2C module, control_interface module, and ethernet module.
-  * 
+  * The uplink channel date checker module includes seven PRBS31 generator, seven GTXs (X0Y0, X0Y1, ..., X0Y6), and seven PRBS31 bit error checker.
+  * The downlink channel data checker module includes one PRBS31 generator, one 32:1 serializer, one 1:32 deserializer, and one PRBS31 bit error checker.
+  * An I2C master was implemented into the FPGA to configure I2C target in GBCR2 chip.
+  * The ethernet module is used to provide 1000M TCP/IP interface between FPGA and PC.
 ### GBCR2 SEE/SEU test software
