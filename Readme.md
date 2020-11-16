@@ -23,3 +23,4 @@
   * `command_interpret.py` is the ethernet driver module.
   * `GBCR2_Reg.py` is the GBCR2 I2C register mapping and function module.
   * `GBCR2_SEU_Test.py` is the GBCR2 SEU top level module that can be operated by users.
+#### 2. `GBCR2_SEU_Test.py` module 
