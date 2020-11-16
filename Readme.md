@@ -19,3 +19,7 @@
   * An I2C master was implemented into the FPGA to configure I2C target in GBCR2 chip.
   * The ethernet module is used to provide 1000M TCP/IP interface between FPGA and PC.
 ### GBCR2 SEE/SEU test software
+#### 1. Software organization
+  * `command_interpret.py` is the ethernet driver module.
+  * `GBCR2_Reg.py` is the GBCR2 I2C register mapping and function module.
+  * `GBCR2_SEU_Test.py` is the GBCR2 SEU top level module thta operation by users.
