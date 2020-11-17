@@ -407,7 +407,7 @@ PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst4(
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst5(
 .clock(gt5_rxusrclk2_i),            // Data check clock
 .reset(reset),
-
+.pulse(pulse),
 .DataIn(gt5_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx1_Error_bit_Count)
 );
