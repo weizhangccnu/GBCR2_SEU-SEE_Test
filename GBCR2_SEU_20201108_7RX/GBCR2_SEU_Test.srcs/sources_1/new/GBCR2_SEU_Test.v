@@ -47,6 +47,11 @@ input wire [6:0] RXN_IN,
 input wire [6:0] RXP_IN,
 output wire [6:0] TXN_OUT,
 output wire [6:0] TXP_OUT,
+//---------------------< Tx
+output Data_OUTP,
+output Data_OUTN,
+input Data_INP,
+input Data_INN,
 //---------------------< IIC interface
 inout wire SDA,
 output wire SCL
@@ -362,45 +367,54 @@ wire [63:0] Rx3_Error_bit_Count;
 wire [63:0] Rx4_Error_bit_Count;
 wire [63:0] Rx5_Error_bit_Count;
 wire [63:0] Rx6_Error_bit_Count;
+wire pulse;
+assign pulse = pulse_reg[1];
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst0(
 .clock(gt0_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt0_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx6_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst1(
 .clock(gt1_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt1_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx5_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst2(
 .clock(gt2_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt2_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx4_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst3(
 .clock(gt3_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt3_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx3_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst4(
 .clock(gt4_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt4_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx2_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst5(
 .clock(gt5_rxusrclk2_i),            // Data check clock
 .reset(reset),
+
 .DataIn(gt5_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx1_Error_bit_Count)
 );
 PRBS31_Data_Checker PRBS31_Data_Checker_Rxinst6(
 .clock(gt6_rxusrclk2_i),            // Data check clock
 .reset(reset),
+.pulse(pulse),
 .DataIn(gt6_rxdata_i),              // 32-bit data
 .Error_bit_Count(Rx0_Error_bit_Count)
 );
@@ -421,10 +435,26 @@ begin
         3'b100 : Channel_Bit_Error_Output_reg = Rx4_Error_bit_Count;
         3'b101 : Channel_Bit_Error_Output_reg = Rx5_Error_bit_Count;
         3'b110 : Channel_Bit_Error_Output_reg = Rx6_Error_bit_Count;
+        3'b111 : Channel_Bit_Error_Output_reg = Tx0_Error_bit_Count;
         default: Channel_Bit_Error_Output_reg = Rx0_Error_bit_Count;
     endcase
 end
 //---------------------------------------------------------> Rx Bit_error readout
+
+//---------------------------------------------------------< TX 160M Transmiter and receiver
+wire [63:0] Tx0_Error_bit_Count;
+Data_generator_160M Data_generator_160M(
+.clock(clk_160MHz),                // 160M clock signal
+.reset(reset),                // system reset signal
+.pulse(pulse),
+.Data_OUTP(Data_OUTP),
+.Data_OUTN(Data_OUTN),
+.Data_INP(Data_INP),
+.Data_INN(Data_INN),
+.Error_bit_Count(Tx0_Error_bit_Count)
+);
+//---------------------------------------------------------< TX 160M Transmiter and receiver
+
 //---------------------------------------------------------> ila_debug
 wire [95:0] probe0;
 wire [95:0] probe1;
@@ -433,6 +463,7 @@ wire [95:0] probe3;
 wire [95:0] probe4;
 wire [95:0] probe5;
 wire [95:0] probe6;
+wire [63:0] probe7;
 assign probe0 = {gt0_rxdata_i,Rx0_Error_bit_Count};
 assign probe1 = {gt1_rxdata_i,Rx1_Error_bit_Count};
 assign probe2 = {gt2_rxdata_i,Rx2_Error_bit_Count};
@@ -440,6 +471,7 @@ assign probe3 = {gt3_rxdata_i,Rx3_Error_bit_Count};
 assign probe4 = {gt4_rxdata_i,Rx4_Error_bit_Count};
 assign probe5 = {gt5_rxdata_i,Rx5_Error_bit_Count};
 assign probe6 = {gt6_rxdata_i,Rx6_Error_bit_Count};
+assign probe7 = Tx0_Error_bit_Count;
 ila_0 ila_0_inst (
 	.clk(gt0_rxusrclk2_i),     // input wire clk
 	.probe0(probe0), // input wire [95:0]  probe0  
@@ -448,7 +480,8 @@ ila_0 ila_0_inst (
 	.probe3(probe3), // input wire [95:0]  probe3 
 	.probe4(probe4), // input wire [95:0]  probe4 
 	.probe5(probe5), // input wire [95:0]  probe5 
-	.probe6(probe6)  // input wire [95:0]  probe6
+	.probe6(probe6), // input wire [95:0]  probe6 
+	.probe7(probe7) // input wire [63:0]  probe7
 );
 //---------------------------------------------------------< ila_debug
 
