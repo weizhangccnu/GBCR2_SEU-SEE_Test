@@ -3,11 +3,11 @@
 import sys
 import copy
 import time
-import visa
 import datetime
 import struct
 import socket
 from GBCR2_Reg import *
+import pyvisa as visa
 from command_interpret import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -70,10 +70,17 @@ def Bit_error_record():
         Channel_bit_error += [Bit_error_byte[0+i*4]<<48 | Bit_error_byte[1+i*4]<<32 | Bit_error_byte[2+i*4]<<16 | Bit_error_byte[3+i*4]]
     return Channel_bit_error
 #---------------------------------------------------------------------------------------------#
+## soft clear all channels error bit count
+# @param[in] val: 1: all channles error bit count will be cleared, 0: remains previous value
+def soft_clear_error_bit_count(val):
+    if val == 1:
+        cmd_interpret.write_pulse_reg(0x0002)
+
+#---------------------------------------------------------------------------------------------#
 def main():
 
     timeslot = int(sys.argv[1])                 # input time slot, unit is second
-    Slave_Addr = 0x23 
+    Slave_Addr = 0x23
 
     # Rx channel 1 settings
     GBCR2_Reg1.set_CH1_CML_AmplSel(7)
@@ -112,6 +119,9 @@ def main():
 
     iic_write_val = GBCR2_Reg1.get_config_vector()
 
+    ## soft clear error bit count
+    soft_clear_error_bit_count(1)
+
     print(iic_write_val)
     ## write data into I2C register one by one
     for i in range(len(iic_write_val)):
@@ -122,7 +132,7 @@ def main():
     for i in range(len(iic_write_val)):
         iic_read_val += [iic_read(0, Slave_Addr, 1, i)]
     print(iic_read_val)
-    
+
     if iic_read_val == iic_write_val:
         print("Wrote into data matches with read back data!")
     else:
@@ -132,16 +142,21 @@ def main():
     today = datetime.date.today()
     print(today)
 
-    #lasttime = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time())) 
     Channel_bit_error = []
+    Previous_Channel_bit_error = []
     lasttime = datetime.datetime.now()
-    with open("GBCR2_bit_error_%s.txt"%(today), 'a') as infile:
+    with open("./Log_file/GBCR2_bit_error_%s.txt"%(today), 'a') as infile1, open("./Log_file/GBCR2_bit_error_location_%s.txt"%(today), 'a') as infile2:
         while True:
             if(datetime.datetime.now() - lasttime > datetime.timedelta(seconds=timeslot)):
                 lasttime = datetime.datetime.now()
                 Channel_bit_error = Bit_error_record()
                 print(lasttime, Channel_bit_error)
-                infile.write("%s %15d %15d %15d %15d %15d %15d %15d\n"%(lasttime, Channel_bit_error[0], Channel_bit_error[1], Channel_bit_error[2], Channel_bit_error[3], Channel_bit_error[4], Channel_bit_error[5], Channel_bit_error[6], Channel_bit_error[7])) 
+                infile1.write("%s %15d %15d %15d %15d %15d %15d %15d %15d\n"%(lasttime, Channel_bit_error[0], Channel_bit_error[1], Channel_bit_error[2], Channel_bit_error[3],\
+                 Channel_bit_error[4], Channel_bit_error[5], Channel_bit_error[6], Channel_bit_error[7]))
+                if Channel_bit_error != Previous_Channel_bit_error:
+                    infile2.write("%s %15d %15d %15d %15d %15d %15d %15d %15d\n"%(lasttime, Channel_bit_error[0], Channel_bit_error[1], Channel_bit_error[2], Channel_bit_error[3],\
+                     Channel_bit_error[4], Channel_bit_error[5], Channel_bit_error[6], Channel_bit_error[7]))
+                Previous_Channel_bit_error = Channel_bit_error
 
     print("Ok!")
 #------------------------------------------------------------------------------------------------#
