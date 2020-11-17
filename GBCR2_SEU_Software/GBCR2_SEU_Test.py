@@ -75,7 +75,14 @@ def Bit_error_record():
 def soft_clear_error_bit_count(val):
     if val == 1:
         cmd_interpret.write_pulse_reg(0x0002)
-
+#---------------------------------------------------------------------------------------------#
+## Set Rx and Tx channels initial value
+# @param[in] val: [Rx0_Init_Val, Rx1_Init_Val, Rx2_Init_Val, Rx3_Init_Val, Rx4_Init_Val, Rx5_Init_Val, Rx6_Init_Val, Tx0_Init_Val]
+def Set_error_bit_init_value(val):
+    cmd_interpret.write_config_reg(6, 0xffff & ((val[1]&0xff)<<8 | (val[0]&0xff)))
+    cmd_interpret.write_config_reg(7, 0xffff & ((val[3]&0xff)<<8 | (val[2]&0xff)))
+    cmd_interpret.write_config_reg(8, 0xffff & ((val[5]&0xff)<<8 | (val[4]&0xff)))
+    cmd_interpret.write_config_reg(9, 0xffff & ((val[7]&0xff)<<8 | (val[6]&0xff)))
 #---------------------------------------------------------------------------------------------#
 def main():
 
@@ -117,10 +124,17 @@ def main():
     GBCR2_Reg1.set_CH7_CTLE_MFSR(10)
     GBCR2_Reg1.set_CH7_CTLE_HFSR(7)
 
+    # Tx channel 1 settings
+    GBCR2_Reg1.set_Tx1_Dis_DL_BIAS(0)  
+
     iic_write_val = GBCR2_Reg1.get_config_vector()
 
     ## soft clear error bit count
     soft_clear_error_bit_count(1)
+
+    ## Set_error_bit_init_value
+    channel_bit_error_init_val = [0, 0, 0, 0, 0, 0, 0, 0]
+    Set_error_bit_init_value(channel_bit_error_init_val)
 
     print(iic_write_val)
     ## write data into I2C register one by one
