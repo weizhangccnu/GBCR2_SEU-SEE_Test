@@ -60,17 +60,19 @@ def iic_read(mode, slave_addr, wr, reg_addr):
 # @return: channel bit error record number
 def Bit_error_record():
     Bit_error_byte = []
-    for i in range(7):
-        time.sleep(0.5)
+    for i in range(8):
+        time.sleep(0.05)
         cmd_interpret.write_config_reg(0, 0x0007 & i)
         for j in range(4):
             Bit_error_byte += [cmd_interpret.read_status_reg(4-j)]
     Channel_bit_error = []
-    for i in range(7):
+    for i in range(8):
         Channel_bit_error += [Bit_error_byte[0+i*4]<<48 | Bit_error_byte[1+i*4]<<32 | Bit_error_byte[2+i*4]<<16 | Bit_error_byte[3+i*4]]
     return Channel_bit_error
 #---------------------------------------------------------------------------------------------#
 def main():
+
+    timeslot = int(sys.argv[1])                 # input time slot, unit is second
     Slave_Addr = 0x23 
 
     # Rx channel 1 settings
@@ -129,11 +131,17 @@ def main():
     ## channel bit error write into file
     today = datetime.date.today()
     print(today)
+
+    #lasttime = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time())) 
+    Channel_bit_error = []
+    lasttime = datetime.datetime.now()
     with open("GBCR2_bit_error_%s.txt"%(today), 'a') as infile:
-        time_stampe = time.strftime('%m-%d_%H-%M-%S',time.localtime(time.time())) 
-        Channel_bit_error = []
-        Channel_bit_error = Bit_error_record()
-        print(Channel_bit_error)
+        while True:
+            if(datetime.datetime.now() - lasttime > datetime.timedelta(seconds=timeslot)):
+                lasttime = datetime.datetime.now()
+                Channel_bit_error = Bit_error_record()
+                print(lasttime, Channel_bit_error)
+                infile.write("%s %15d %15d %15d %15d %15d %15d %15d\n"%(lasttime, Channel_bit_error[0], Channel_bit_error[1], Channel_bit_error[2], Channel_bit_error[3], Channel_bit_error[4], Channel_bit_error[5], Channel_bit_error[6], Channel_bit_error[7])) 
 
     print("Ok!")
 #------------------------------------------------------------------------------------------------#
