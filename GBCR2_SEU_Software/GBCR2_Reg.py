@@ -304,7 +304,7 @@ class GBCR2_Reg(object):
         self._regMap['dllClockDelay_CH3'] = val & 0xf
 
     def set_dllClockDelay_CH2(self, val):
-        self._regMap['dllClockDelay_CH3'] = val & 0xf
+        self._regMap['dllClockDelay_CH2'] = val & 0xf
 
     def set_dllClockDelay_CH1(self, val):
         self._regMap['dllClockDelay_CH1'] = val & 0xf
