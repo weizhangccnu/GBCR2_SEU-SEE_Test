@@ -24,3 +24,7 @@
   * `GBCR2_Reg.py` is the GBCR2 I2C register mapping and function module.
   * `GBCR2_SEU_Test.py` is the GBCR2 SEU top level module that can be operated by users.
 #### 2. `GBCR2_SEU_Test.py` module 
+  * Configure I2C target in GBCR2 chip.
+  * Clear bit error count.
+  * Set bit error count initial value.
+  * Record bit error count into txt file.
