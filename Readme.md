@@ -28,3 +28,5 @@
   * Clear bit error count.
   * Set bit error count initial value.
   * Record bit error count into txt file.
+
+#### 3. 
